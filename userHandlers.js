@@ -1,8 +1,25 @@
 const database = require("./database");
 
+//route GET avec deux filtres :
+//si le paramètre langage est fourni ds l'URL, on obtient que les locuteurs de cette langue
+//si un paramètre city est fourni, on ne récupère que les personnes vivant dans cette ville
+
 const getUsers = (req, res) => {
+  let sql = "SELECT * FROM users";
+  const sqlValues = [];
+
+  if (req.query.language != null) {
+    sql += " WHERE language = ?";
+    sqlValues.push(req.query.language);
+  }
+
+  if (req.query.city != null) {
+    sql += req.query.language != null ? " AND city = ?" : " WHERE city = ?";
+    sqlValues.push(req.query.city);
+  }
+
   database
-    .query("SELECT * FROM users")
+    .query(sql, sqlValues)
     .then(([user]) => {
       res.json(user);
     })
@@ -12,6 +29,7 @@ const getUsers = (req, res) => {
     });
 };
 
+//Route GET pour obtenir les utilisateurs par id
 const getUsersById = (req, res) => {
   const id = req.params.id; // extract the id from the request parameter
   database
@@ -76,9 +94,7 @@ const deleteUser = (req, res) => {
   const id = parseInt(req.params.id);
 
   database
-    .query(
-      "DELETE FROM users WHERE id = ?", [id]
-    )
+    .query("DELETE FROM users WHERE id = ?", [id])
     .then(([result]) => {
       if (result.affectedRows === 0) {
         res.status(400).send("Not Found");
@@ -89,8 +105,7 @@ const deleteUser = (req, res) => {
     .catch((err) => {
       console.error(err);
       res.status(500).send("Error deleting the user");
-    })
-
+    });
 };
 
 module.exports = {
